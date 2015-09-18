@@ -56,8 +56,6 @@ from fuelweb_test import logwrap
 class IronicPlugin(TestBasic):
     """Tests for Ironic plugin."""
 
-    BAREMETAL = netaddr.IPNetwork(os.environ['BAREMETAL_NET'])
-
     @logwrap
     def update_nodes_interfaces(self, cluster_id, nailgun_nodes=[]):
         net_provider = self.fuel_web.client.get_cluster(cluster_id)[
@@ -96,7 +94,7 @@ class IronicPlugin(TestBasic):
             self.env.d_env.get_admin_remote(),
             plugin=os.path.basename(path_to_ironic_rpm))
 
-    @test(depends_on=[SetupEnvironment.prepare_slaves_5],
+    @test(#depends_on=[SetupEnvironment.prepare_slaves_5],
           groups=["ironic_plugin"])
     def deploy_cluster_with_ironic(self):
         self.env.revert_snapshot("ready_with_5_slaves")
@@ -111,12 +109,11 @@ class IronicPlugin(TestBasic):
                 "net_segment_type": conf.NEUTRON_SEGMENT_TYPE,
             }
         )
-        # TODO check if it provides cidr
-        self.BAREMETAL = self.env.d_env.get_network(name='baremetal')[0].ip
+        baremetal_cidr = self.env.d_env.get_network(name='baremetal').ip
         baremetal_network = {
             'name': 'baremetal',
             'group_id': cluster_id,
-            'cidr': str(self.BAREMETAL),
+            'cidr': str(baremetal_cidr),
             'gateway': None,
             "meta": {
                 "notation": "ip_ranges",
@@ -126,8 +123,8 @@ class IronicPlugin(TestBasic):
                 "unmovable": False,
                 "use_gateway": False,
                 "render_addr_mask": None,
-                "ip_range": [str(self.BAREMETAL[2]),
-                             str(self.BAREMETAL[50])]
+                "ip_range": [str(baremetal_cidr[2]),
+                             str(baremetal_cidr[50])]
             }
         }
         self.fuel_web.client.add_network_group(baremetal_network)
@@ -139,10 +136,10 @@ class IronicPlugin(TestBasic):
             msg)
         options = {
             "metadata/enabled": True,
-            "l3_gateway/value": str(self.BAREMETAL[51]),
+            "l3_gateway/value": str(baremetal_cidr[51]),
             "l3_allocation_pool/value": "{0}:{1}".format(
-                str(self.BAREMETAL[52]),
-                str(self.BAREMETAL[-2])),
+                str(baremetal_cidr[52]),
+                str(baremetal_cidr[-2])),
             "password/value": "I_love_plugins"}
         if options['metadata/enabled']:
             self.fuel_web.update_plugin_data(cluster_id, plugin_name, options)

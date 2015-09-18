@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 export NODES_COUNT=4
-export ENV_NAME=yyekovenko-ironic5
+export ENV_NAME=yyekovenko-ironic8
 export VENV_PATH=/home/yyekovenko/venv/fuelweb_test
 export IRONIC_PLUGIN_PATH=/home/yyekovenko/ironic_resources/fuel-plugin-ironic-1.0-1.0.0-1.noarch.rpm
 export ISO_PATH=/home/yyekovenko/ironic_resources/fuel-7.0-248-2015-08-28_10-26-09.iso
