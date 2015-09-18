@@ -94,7 +94,7 @@ class IronicPlugin(TestBasic):
             self.env.d_env.get_admin_remote(),
             plugin=os.path.basename(path_to_ironic_rpm))
 
-    @test(#depends_on=[SetupEnvironment.prepare_slaves_5],
+    @test(depends_on=[SetupEnvironment.prepare_slaves_5],
           groups=["ironic_plugin"])
     def deploy_cluster_with_ironic(self):
         self.env.revert_snapshot("ready_with_5_slaves")
