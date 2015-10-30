@@ -1,0 +1,20 @@
+[
+  {
+    "cpus": 4,
+    "memory_mb": 16384,
+    "local_gb": 1024,
+    "ip": "185.8.58.246",
+    "ipmi_user": "engineer",
+    "ipmi_pass": "09ejm7HGViwbg",
+    "mac": "00:25:90:7f:79:60"
+  },
+  {
+    "cpus": 4,
+    "memory_mb": 16384,
+    "local_gb": 1024,
+    "ip": "185.8.58.248",
+    "ipmi_user": "engineer",
+    "ipmi_pass": "09ejm7HGViwbg",
+    "mac": "00:25:90:7f:79:50"
+  }
+]

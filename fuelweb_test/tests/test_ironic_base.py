@@ -12,18 +12,65 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from devops.helpers.helpers import wait
+from fuelweb_test import logwrap
+from fuelweb_test import settings as conf
 from fuelweb_test.helpers.decorators import log_snapshot_after_test
+from fuelweb_test.helpers.utils import run_on_remote
 from fuelweb_test.settings import DEPLOYMENT_MODE
 from fuelweb_test.settings import NEUTRON_SEGMENT
-from fuelweb_test.tests.base_test_case import SetupEnvironment
 from fuelweb_test.tests.base_test_case import TestBasic
-
+from fuelweb_test.tests.base_test_case import SetupEnvironment
 from proboscis import test
+from proboscis.asserts import assert_equal, assert_true
 
 
 @test(groups=["ironic"])
 class TestIronicBase(TestBasic):
     """TestIronicBase"""  # TODO documentation
+
+    def __init__(self):
+        super(TestIronicBase, self).__init__()
+
+        # Get ironic nodes characteristics
+        self.ironics = [
+            {
+                'cpus': node.vcpu,
+                'memory_mb': node.memory,
+                'local_gb': conf.NODE_VOLUME_SIZE,
+                'mac': node.interface_by_network_name('ironic')[0].mac_address
+            }
+            for node in self.env.d_env.nodes().ironics
+        ]
+
+    @logwrap
+    def check_userdata_executed(self, cluster_id, instance_ip,
+                                instance_keypair):
+        controllers = self.fuel_web.get_nailgun_cluster_nodes_by_roles(
+            cluster_id, ['controller'])
+        remote = self.fuel_web.get_ssh_for_nailgun_node(controllers[0])
+
+        # save private key to the controller node
+        instance_key_path = '/root/.ssh/instancekey_rsa'
+        run_on_remote(remote,
+                      'echo "{0}" > {1} && chmod 400 {1}'.format(
+                          instance_keypair.private_key, instance_key_path))
+
+        cmd = "ssh -o 'StrictHostKeyChecking no' -i {0} ubuntu@{1} " \
+              "\"if [ -f /home/ubuntu/success.txt ] ; " \
+              "then echo -n yes ; " \
+              "else echo -n no ; fi\"".format(instance_key_path,
+                                              instance_ip)
+
+        wait(lambda: remote.execute(cmd)['exit_code'] == 0,
+             timeout=2 * 60)
+        res = remote.execute(cmd)
+        assert_equal(0, res['exit_code'],
+                     'Instance has no connectivity, exit code {0},'
+                     'stdout {1}, stderr {2}'.format(res['exit_code'],
+                                                     res['stdout'],
+                                                     res['stderr']))
+        assert_true('yes' in res['stdout'], 'Userdata was not executed.')
 
     @test(depends_on=[SetupEnvironment.prepare_slaves_3],
           groups=["ironic_base"])

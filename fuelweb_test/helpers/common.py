@@ -22,6 +22,7 @@ from fuelweb_test.settings import PATH_TO_CERT
 
 from cinderclient import client as cinderclient
 from glanceclient.v1 import Client as glanceclient
+from ironicclient import client as ironicclient
 from keystoneclient.v2_0 import Client as keystoneclient
 from keystoneclient.exceptions import ClientException
 from novaclient.v1_1 import Client as novaclient
@@ -69,11 +70,19 @@ class Common(object):
         LOGGER.debug('Token is {0}'.format(token))
         glance_endpoint = self.keystone.service_catalog.url_for(
             service_type='image', endpoint_type='publicURL')
-        LOGGER.debug('Glance endpoind is {0}'.format(glance_endpoint))
+        LOGGER.debug('Glance endpoint is {0}'.format(glance_endpoint))
 
         self.glance = glanceclient(endpoint=glance_endpoint,
                                    token=token,
                                    cacert=path_to_cert)
+
+        ironic_endpoint = self.keystone.service_catalog.url_for(
+            service_type='baremetal', endpoint_type='publicURL')
+        LOGGER.debug('Ironic endpoint is {0}'.format(ironic_endpoint))
+        self.ironic = ironicclient.get_client(api_version=1,
+                                              os_auth_token=token,
+                                              ironic_url=ironic_endpoint,
+                                              ca_file=PATH_TO_CERT)
 
     def goodbye_security(self):
         secgroup_list = self.nova.security_groups.list()
