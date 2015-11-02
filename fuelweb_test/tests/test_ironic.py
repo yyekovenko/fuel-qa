@@ -77,19 +77,21 @@ class IronicTest(TestIronicBase):
         mac = self.env.d_env.nodes().ironics[0].interface_by_network_name(
             'ironic')[0].mac_address
 
-        logger.debug('Create ironic node')
-        ironic_node = ironic.create_virtual_node(
-            server_ip=os.environ['HW_SERVER_IP'],
-            ssh_username=os.environ['HW_SSH_USER'],
-            ssh_password=os.environ['HW_SSH_PASS'],
-            cpus=cpus,
-            memory_mb=memory_mb,
-            local_gb=local_gb
-        )
-        logger.debug('Create ironic port')
-        ironic.create_port(address=mac, node_uuid=ironic_node.uuid)
-        ironic.wait_for_hypervisors(ironic_nodes=[ironic_node],
-                                    timeout=900)
+        ironic.create_ironic_nodes_wait([self.ironics[0]])
+
+        # logger.debug('Create ironic node')
+        # ironic_node = ironic.create_ironic_node(
+        #     server_ip=os.environ['HW_SERVER_IP'],
+        #     username=os.environ['HW_SSH_USER'],
+        #     password=os.environ['HW_SSH_PASS'],
+        #     cpus=cpus,
+        #     memory_mb=memory_mb,
+        #     local_gb=local_gb
+        # )
+        # logger.debug('Create ironic port')
+        # ironic.create_port(address=mac, node_uuid=ironic_node.uuid)
+        # ironic.wait_for_hypervisors(ironic_nodes=[ironic_node],
+        #                             timeout=900)
 
         key, img, flavor = ironic.prepare_ironic_resources(
             cpus, memory_mb, local_gb, is_hw=False)
@@ -110,49 +112,49 @@ class IronicTest(TestIronicBase):
     # @test(#depends_on=[TestIronicBase.test_ironic_base],
           # groups=['ironic_hw']
     # )
-    def boot_ironic_node_with_fuel_ipmi_agent(self):
-        self.env.revert_snapshot("ironic_base")
-
-        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                               "test_ironic_hw.json")) as hw_file:
-            hw = json.load(hw_file)
-
-        cpus = hw[0]['cpus']
-        memory_mb = hw[0]['memory_mb']
-        local_gb = hw[0]['local_gb']
-
-        cluster_id = self.fuel_web.get_last_created_cluster()
-        controller_ip = self.fuel_web.get_public_vip(cluster_id)
-        os_conn = os_actions.OpenStackActions(controller_ip)
-        ironic = ironic_actions.IronicActions(controller_ip)
-
-        key, img, flavor = ironic.prepare_ironic_resources(
-            cpus, memory_mb, local_gb, is_hw=True)
-
-        logger.debug('Create ironic node')
-        ironic_node = ironic.create_baremetal_node(
-            server_ip=hw[0]['ip'],
-            ipmi_username=hw[0]['ipmi_user'],
-            ipmi_password=hw[0]['ipmi_pass'],
-            cpus=cpus,
-            memory_mb=memory_mb,
-            local_gb=local_gb
-        )
-        ironic.wait_for_hypervisors(ironic_nodes=[ironic_node],
-                                    timeout=900)
-
-        logger.debug('Create ironic port')
-        ironic.create_port(address=hw[0]['mac'], node_uuid=ironic_node.uuid)
-
-        logger.debug('Boot ironic baremetal instance')
-        srv = ironic.boot_ironic_instance(
-            image_id=img.id,
-            flavor_id=flavor.id,
-            timeout=600,
-            key_name=key.name,
-            userdata='#!/bin/bash\ntouch /home/ubuntu/success.txt'
-        )
-        floating_ip = os_conn.assign_floating_ip(srv)
-        self.check_userdata_executed(cluster_id, floating_ip.ip, key)
+    # def boot_ironic_node_with_fuel_ipmi_agent(self):
+    #     self.env.revert_snapshot("ironic_base")
+    #
+    #     with open(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+    #                            "test_ironic_hw.json")) as hw_file:
+    #         hw = json.load(hw_file)
+    #
+    #     cpus = hw[0]['cpus']
+    #     memory_mb = hw[0]['memory_mb']
+    #     local_gb = hw[0]['local_gb']
+    #
+    #     cluster_id = self.fuel_web.get_last_created_cluster()
+    #     controller_ip = self.fuel_web.get_public_vip(cluster_id)
+    #     os_conn = os_actions.OpenStackActions(controller_ip)
+    #     ironic = ironic_actions.IronicActions(controller_ip)
+    #
+    #     key, img, flavor = ironic.prepare_ironic_resources(
+    #         cpus, memory_mb, local_gb, is_hw=True)
+    #
+    #     logger.debug('Create ironic node')
+    #     ironic_node = ironic.create_baremetal_node(
+    #         server_ip=hw[0]['ip'],
+    #         ipmi_username=hw[0]['ipmi_user'],
+    #         ipmi_password=hw[0]['ipmi_pass'],
+    #         cpus=cpus,
+    #         memory_mb=memory_mb,
+    #         local_gb=local_gb
+    #     )
+    #     ironic.wait_for_hypervisors(ironic_nodes=[ironic_node],
+    #                                 timeout=900)
+    #
+    #     logger.debug('Create ironic port')
+    #     ironic.create_port(address=hw[0]['mac'], node_uuid=ironic_node.uuid)
+    #
+    #     logger.debug('Boot ironic baremetal instance')
+    #     srv = ironic.boot_ironic_instance(
+    #         image_id=img.id,
+    #         flavor_id=flavor.id,
+    #         timeout=600,
+    #         key_name=key.name,
+    #         userdata='#!/bin/bash\ntouch /home/ubuntu/success.txt'
+    #     )
+    #     floating_ip = os_conn.assign_floating_ip(srv)
+    #     self.check_userdata_executed(cluster_id, floating_ip.ip, key)
 
         # self.env.make_snapshot("boot_ironic_node_with_fuel_ipmi_agent")

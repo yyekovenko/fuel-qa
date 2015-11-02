@@ -74,37 +74,37 @@ class IronicActions(common.Common):
                 container_format='bare')
         return img
 
-    def _create_ironic_node(self, driver, server_ip, username, password,
-                            cpus, memory_mb, local_gb):
-
-        driver_info = {
-            'deploy_kernel': self.os_conn.get_image(
-                'ironic-deploy-linux').id,
-            'deploy_ramdisk': self.os_conn.get_image(
-                'ironic-deploy-initramfs').id,
-            'deploy_squashfs': self.os_conn.get_image(
-                'ironic-deploy-squashfs').id
-        }
-        if 'ipmi' in driver:
-            driver_info['ipmi_address'] = server_ip
-            driver_info['ipmi_username'] = username
-            driver_info['ipmi_password'] = password
-        elif 'ssh' in driver:
-            driver_info['ssh_address'] = server_ip
-            driver_info['ssh_username'] = username
-            driver_info['ssh_password'] = password
-            driver_info['ssh_virt_type'] = 'virsh'
-
-        properties = {
-            'cpus': cpus,
-            'memory_mb': memory_mb,
-            'local_gb': local_gb,
-            'cpu_arch': 'x86_64'
-        }
-
-        return self.ironic.node.create(driver=driver,
-                                       driver_info=driver_info,
-                                       properties=properties)
+    # def _create_ironic_node(self, driver, server_ip, username, password,
+    #                         cpus, memory_mb, local_gb):
+    #
+    #     driver_info = {
+    #         'deploy_kernel': self.os_conn.get_image(
+    #             'ironic-deploy-linux').id,
+    #         'deploy_ramdisk': self.os_conn.get_image(
+    #             'ironic-deploy-initramfs').id,
+    #         'deploy_squashfs': self.os_conn.get_image(
+    #             'ironic-deploy-squashfs').id
+    #     }
+    #     if 'ipmi' in driver:
+    #         driver_info['ipmi_address'] = server_ip
+    #         driver_info['ipmi_username'] = username
+    #         driver_info['ipmi_password'] = password
+    #     elif 'ssh' in driver:
+    #         driver_info['ssh_address'] = server_ip
+    #         driver_info['ssh_username'] = username
+    #         driver_info['ssh_password'] = password
+    #         driver_info['ssh_virt_type'] = 'virsh'
+    #
+    #     properties = {
+    #         'cpus': cpus,
+    #         'memory_mb': memory_mb,
+    #         'local_gb': local_gb,
+    #         'cpu_arch': 'x86_64'
+    #     }
+    #
+    #     return self.ironic.node.create(driver=driver,
+    #                                    driver_info=driver_info,
+    #                                    properties=properties)
 
     def wait_for_hypervisors(self, ironic_nodes, timeout=1800):
         # TODO For now (iso-216) hypervisors are not updated in time.
@@ -124,19 +124,19 @@ class IronicActions(common.Common):
         #                         "correct HW data.")
         time.sleep(timeout)
 
-    def create_virtual_node(self, server_ip, ssh_username, ssh_password,
-                            cpus, memory_mb, local_gb):
-
-        return self._create_ironic_node('fuel_ssh', server_ip, ssh_username,
-                                        ssh_password, cpus, memory_mb,
-                                        local_gb)
-
-    def create_baremetal_node(self, server_ip, ipmi_username, ipmi_password,
-                              cpus, memory_mb, local_gb):
-
-        return self._create_ironic_node('fuel_ipmitool', server_ip,
-                                        ipmi_username, ipmi_password, cpus,
-                                        memory_mb, local_gb)
+    # def create_virtual_node(self, server_ip, ssh_username, ssh_password,
+    #                         cpus, memory_mb, local_gb):
+    #
+    #     return self._create_ironic_node('fuel_ssh', server_ip, ssh_username,
+    #                                     ssh_password, cpus, memory_mb,
+    #                                     local_gb)
+    #
+    # def create_baremetal_node(self, server_ip, ipmi_username, ipmi_password,
+    #                           cpus, memory_mb, local_gb):
+    #
+    #     return self._create_ironic_node('fuel_ipmitool', server_ip,
+    #                                     ipmi_username, ipmi_password, cpus,
+    #                                     memory_mb, local_gb)
 
     def create_port(self, address, node_uuid):
         return self.ironic.port.create(**{'address': address,
@@ -196,48 +196,132 @@ class IronicActions(common.Common):
 
         return key, img, flavor
 
-    def create_ironic_virtual_nodes_wait(self, hosts, timeout=900):
+    def create_ironic_node(self, server_ip, username, password,
+                           cpus, memory_mb, local_gb, is_hw=False):
         """
-        Arguments:
-         - list of hosts dictionaries
+        Send ironic request to create a node with specified attributes.
 
+        :param server_ip: string, IP address of the baremetal or
+        the server hosting the VM
+        :param username: IPMI username for baremetal or
+        SSH username for the server hostig the VM
+        :param password: password of IPMI or SSH user
+        :param cpus: integer
+        :param memory_mb: integer
+        :param local_gb: integer
+        :param is_hw: bool value defines if real baremetal server is used as
+         ironic host. Different Ironic drivers will be chosen depending on it.
+        :return: Ironic node object.
+        """
+
+        driver_info = {
+            'deploy_kernel': self.os_conn.get_image(
+                'ironic-deploy-linux').id,
+            'deploy_ramdisk': self.os_conn.get_image(
+                'ironic-deploy-initramfs').id,
+            'deploy_squashfs': self.os_conn.get_image(
+                'ironic-deploy-squashfs').id
+        }
+        if is_hw:
+            driver = 'fuel_ipmitools'
+            driver_info['ipmi_address'] = server_ip
+            driver_info['ipmi_username'] = username
+            driver_info['ipmi_password'] = password
+        else:
+            driver = 'fuel_ssh'
+            driver_info['ssh_address'] = server_ip
+            driver_info['ssh_username'] = username
+            driver_info['ssh_password'] = password
+            driver_info['ssh_virt_type'] = 'virsh'
+
+        properties = {
+            'cpus': cpus,
+            'memory_mb': memory_mb,
+            'local_gb': local_gb,
+            'cpu_arch': 'x86_64'
+        }
+
+        return self.ironic.node.create(driver=driver,
+                                       driver_info=driver_info,
+                                       properties=properties)
+
+    def create_ironic_nodes_wait(self, hosts, timeout=900, is_hw=False):
+        """
+
+        :param hosts: list of dicts describing the ironic hosts.
+        :param timeout:
+        :param is_hw:
+        :return:
         """
         ironic_nodes = []
         for host in hosts:
             logger.debug('Create ironic node with MAC={}'.format(host['mac']))
-            node = self.ironic.create_virtual_node(
-                server_ip=os.environ['HW_SERVER_IP'],
-                ssh_username=os.environ['HW_SSH_USER'],
-                ssh_password=os.environ['HW_SSH_PASS'],
-                cpus=host['cpus'],
-                memory_mb=host['memory_mb'],
-                local_gb=host['local_gb']
-            )
+            if is_hw:
+                node = self.ironic.create_ironic_node(
+                    server_ip=host['ip'],
+                    username=host['ipmi_user'],
+                    password=host['ipmi_pass'],
+                    cpus=host['cpus'],
+                    memory_mb=host['memory_mb'],
+                    local_gb=host['local_gb']
+                )
+            else:
+                node = self.ironic.create_ironic_node(
+                    server_ip=os.environ['HW_SERVER_IP'],
+                    username=os.environ['HW_SSH_USER'],
+                    password=os.environ['HW_SSH_PASS'],
+                    cpus=host['cpus'],
+                    memory_mb=host['memory_mb'],
+                    local_gb=host['local_gb']
+                )
             logger.debug('Create ironic port for node {}'.format(node.uuid))
             self.ironic.create_port(address=host['mac'], node_uuid=node.uuid)
             ironic_nodes.append(node)
 
         self.ironic.wait_for_hypervisors(ironic_nodes, timeout)
 
-    def create_ironic_real_nodes_wait(self, hosts, timeout=900):
-        """
-        Arguments:
-         - list of hosts dictionaries
-
-        """
-        ironic_nodes = []
-        for host in hosts:
-            logger.debug('Create ironic node with MAC={}'.format(host['mac']))
-            node = self.ironic.create_baremetal_node(
-                server_ip=host['ip'],
-                ipmi_username=host['ipmi_user'],
-                ipmi_password=host['ipmi_pass'],
-                cpus=host['cpus'],
-                memory_mb=host['memory_mb'],
-                local_gb=host['local_gb']
-            )
-            logger.debug('Create ironic port for node {}'.format(node.uuid))
-            self.ironic.create_port(address=host['mac'], node_uuid=node.uuid)
-            ironic_nodes.append(node)
-
-        self.ironic.wait_for_hypervisors(ironic_nodes, timeout)
+    # def create_ironic_virtual_nodes_wait(self, hosts, timeout=900):
+    #     """
+    #     Arguments:
+    #      - list of hosts dictionaries
+    #
+    #     """
+    #     ironic_nodes = []
+    #     for host in hosts:
+    #         logger.debug('Create ironic node with MAC={}'.format(host['mac']))
+    #         node = self.ironic.create_virtual_node(
+    #             server_ip=os.environ['HW_SERVER_IP'],
+    #             ssh_username=os.environ['HW_SSH_USER'],
+    #             ssh_password=os.environ['HW_SSH_PASS'],
+    #             cpus=host['cpus'],
+    #             memory_mb=host['memory_mb'],
+    #             local_gb=host['local_gb']
+    #         )
+    #         logger.debug('Create ironic port for node {}'.format(node.uuid))
+    #         self.ironic.create_port(address=host['mac'], node_uuid=node.uuid)
+    #         ironic_nodes.append(node)
+    #
+    #     self.ironic.wait_for_hypervisors(ironic_nodes, timeout)
+    #
+    # def create_ironic_real_nodes_wait(self, hosts, timeout=900):
+    #     """
+    #     Arguments:
+    #      - list of hosts dictionaries
+    #
+    #     """
+    #     ironic_nodes = []
+    #     for host in hosts:
+    #         logger.debug('Create ironic node with MAC={}'.format(host['mac']))
+    #         node = self.ironic.create_baremetal_node(
+    #             server_ip=host['ip'],
+    #             ipmi_username=host['ipmi_user'],
+    #             ipmi_password=host['ipmi_pass'],
+    #             cpus=host['cpus'],
+    #             memory_mb=host['memory_mb'],
+    #             local_gb=host['local_gb']
+    #         )
+    #         logger.debug('Create ironic port for node {}'.format(node.uuid))
+    #         self.ironic.create_port(address=host['mac'], node_uuid=node.uuid)
+    #         ironic_nodes.append(node)
+    #
+    #     self.ironic.wait_for_hypervisors(ironic_nodes, timeout)
