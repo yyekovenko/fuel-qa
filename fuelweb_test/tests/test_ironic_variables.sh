@@ -7,20 +7,20 @@ export DEFAULT_IMAGES_UBUNTU=/home/yyekovenko/ironic_resources/trusty-server-clo
 export IRONIC_ENABLED=true
 export IRONIC_NODES_COUNT=2
 
-## cz5578
-#export HW_SERVER_IP=172.18.170.7
-#export HW_SSH_USER=ironic
-#export HW_SSH_PASS=ironic_password
-#export VENV_PATH=/home/yyekovenko/venv/october-env
-#export ENV_NAME=yyekovenko-ironic-iso-216
+# cz5578
+export HW_SERVER_IP=172.18.170.7
+export HW_SSH_USER=ironic
+export HW_SSH_PASS=ironic_password
+export VENV_PATH=/home/yyekovenko/venv/october-env
+export ENV_NAME=yyekovenko-ironic-iso-216
 
-# cz7764
-export HW_SERVER_IP=172.18.170.44
-export HW_SSH_USER=<username>
-export HW_SSH_PASS=<********>
-export DRIVER_USE_HOST_CPU=false
-export VENV_PATH=/home/yyekovenko/venv/devops
-export ENV_NAME=yyekovenko-ironic-367
+## cz7764
+#export HW_SERVER_IP=172.18.170.44
+#export HW_SSH_USER=<username>
+#export HW_SSH_PASS=<********>
+#export DRIVER_USE_HOST_CPU=false
+#export VENV_PATH=/home/yyekovenko/venv/devops
+#export ENV_NAME=yyekovenko-ironic-367
 
 #export IRONIC_PLUGIN_PATH=/home/yyekovenko/ironic_resources/fuel-plugin-ironic-1.0-1.0.0-1.noarch.rpm
 #export BAREMETAL_NET='10.109.47.1/24'
