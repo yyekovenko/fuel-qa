@@ -185,7 +185,7 @@ class IronicActions(common.Common):
         #############################################
         img = self.os_conn.get_image_by_name(obj_name)
         if img is None:
-            img = self.ironic.import_ironic_image(
+            img = self.import_ironic_image(
                 disk=disk_type, image_name=obj_name)
         #############################################
 
@@ -257,7 +257,7 @@ class IronicActions(common.Common):
         for host in hosts:
             logger.debug('Create ironic node with MAC={}'.format(host['mac']))
             if is_hw:
-                node = self.ironic.create_ironic_node(
+                node = self.create_ironic_node(
                     server_ip=host['ip'],
                     username=host['ipmi_user'],
                     password=host['ipmi_pass'],
@@ -266,7 +266,7 @@ class IronicActions(common.Common):
                     local_gb=host['local_gb']
                 )
             else:
-                node = self.ironic.create_ironic_node(
+                node = self.create_ironic_node(
                     server_ip=os.environ['HW_SERVER_IP'],
                     username=os.environ['HW_SSH_USER'],
                     password=os.environ['HW_SSH_PASS'],
@@ -275,10 +275,10 @@ class IronicActions(common.Common):
                     local_gb=host['local_gb']
                 )
             logger.debug('Create ironic port for node {}'.format(node.uuid))
-            self.ironic.create_port(address=host['mac'], node_uuid=node.uuid)
+            self.create_port(address=host['mac'], node_uuid=node.uuid)
             ironic_nodes.append(node)
 
-        self.ironic.wait_for_hypervisors(ironic_nodes, timeout)
+        self.wait_for_hypervisors(ironic_nodes, timeout)
 
     # def create_ironic_virtual_nodes_wait(self, hosts, timeout=900):
     #     """
@@ -289,7 +289,7 @@ class IronicActions(common.Common):
     #     ironic_nodes = []
     #     for host in hosts:
     #         logger.debug('Create ironic node with MAC={}'.format(host['mac']))
-    #         node = self.ironic.create_virtual_node(
+    #         node = self.create_virtual_node(
     #             server_ip=os.environ['HW_SERVER_IP'],
     #             ssh_username=os.environ['HW_SSH_USER'],
     #             ssh_password=os.environ['HW_SSH_PASS'],
@@ -298,10 +298,10 @@ class IronicActions(common.Common):
     #             local_gb=host['local_gb']
     #         )
     #         logger.debug('Create ironic port for node {}'.format(node.uuid))
-    #         self.ironic.create_port(address=host['mac'], node_uuid=node.uuid)
+    #         self.create_port(address=host['mac'], node_uuid=node.uuid)
     #         ironic_nodes.append(node)
     #
-    #     self.ironic.wait_for_hypervisors(ironic_nodes, timeout)
+    #     self.wait_for_hypervisors(ironic_nodes, timeout)
     #
     # def create_ironic_real_nodes_wait(self, hosts, timeout=900):
     #     """
@@ -312,7 +312,7 @@ class IronicActions(common.Common):
     #     ironic_nodes = []
     #     for host in hosts:
     #         logger.debug('Create ironic node with MAC={}'.format(host['mac']))
-    #         node = self.ironic.create_baremetal_node(
+    #         node = self.create_baremetal_node(
     #             server_ip=host['ip'],
     #             ipmi_username=host['ipmi_user'],
     #             ipmi_password=host['ipmi_pass'],
@@ -321,7 +321,7 @@ class IronicActions(common.Common):
     #             local_gb=host['local_gb']
     #         )
     #         logger.debug('Create ironic port for node {}'.format(node.uuid))
-    #         self.ironic.create_port(address=host['mac'], node_uuid=node.uuid)
+    #         self.create_port(address=host['mac'], node_uuid=node.uuid)
     #         ironic_nodes.append(node)
     #
-    #     self.ironic.wait_for_hypervisors(ironic_nodes, timeout)
+    #     self.wait_for_hypervisors(ironic_nodes, timeout)

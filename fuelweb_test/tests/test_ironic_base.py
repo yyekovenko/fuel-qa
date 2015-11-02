@@ -85,9 +85,9 @@ class TestIronicBase(TestBasic):
                3. Add 1 compute node
                4. Add 1 ironic node
 
-           Snapshot: test_ironic_base
+           Snapshot: ironic_base
         """
-
+        self.check_run("ironic_base")
         self.env.revert_snapshot("ready_with_3_slaves")
 
         cluster_id = self.fuel_web.create_cluster(
