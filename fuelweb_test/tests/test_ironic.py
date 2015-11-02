@@ -20,7 +20,7 @@ Before test run, ensure the following environment variables are defined:
   - VENV_PATH
   - ISO_PATH
 
-See ironic_env_vars.sh for example.
+See test_ironic_variables.sh for example.
 
 If the environment with name=ENV_NAME does not exist it will be created before
 test execution start.
@@ -62,7 +62,7 @@ class IronicTest(TestIronicBase):
         Duration 35m
         Snapshot boot_ironic_node_with_fuel_ssh_agent
         """
-        # self.env.revert_snapshot("ironic_base")
+        self.env.revert_snapshot("ironic_base")
 
         cluster_id = self.fuel_web.get_last_created_cluster()
 
@@ -70,31 +70,13 @@ class IronicTest(TestIronicBase):
         os_conn = os_actions.OpenStackActions(controller_ip)
         ironic = ironic_actions.IronicActions(controller_ip)
 
-        # Get ironic nodes characteristics
-        cpus = self.env.d_env.nodes().ironics[0].vcpu
-        memory_mb = self.env.d_env.nodes().ironics[0].memory
-        local_gb = conf.NODE_VOLUME_SIZE
-        mac = self.env.d_env.nodes().ironics[0].interface_by_network_name(
-            'ironic')[0].mac_address
-
         ironic.create_ironic_nodes_wait([self.ironics[0]])
 
-        # logger.debug('Create ironic node')
-        # ironic_node = ironic.create_ironic_node(
-        #     server_ip=os.environ['HW_SERVER_IP'],
-        #     username=os.environ['HW_SSH_USER'],
-        #     password=os.environ['HW_SSH_PASS'],
-        #     cpus=cpus,
-        #     memory_mb=memory_mb,
-        #     local_gb=local_gb
-        # )
-        # logger.debug('Create ironic port')
-        # ironic.create_port(address=mac, node_uuid=ironic_node.uuid)
-        # ironic.wait_for_hypervisors(ironic_nodes=[ironic_node],
-        #                             timeout=900)
-
         key, img, flavor = ironic.prepare_ironic_resources(
-            cpus, memory_mb, local_gb, is_hw=False)
+            cpus=self.ironics[0]['cpus'],
+            memory_mb=self.ironics[0]['memory_mb'],
+            local_gb=self.ironics[0]['local_gb'],
+            is_hw=False)
 
         logger.debug('Boot ironic VM')
         srv = ironic.boot_ironic_instance(
